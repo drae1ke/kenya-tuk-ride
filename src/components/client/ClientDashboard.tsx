@@ -1,0 +1,178 @@
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import DashboardLayout from '@/components/DashboardLayout';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { mockOrders } from '@/lib/mock-data';
+import { MapPin, Navigation, CreditCard, Banknote, Clock, Star } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
+const ClientDashboard = () => {
+  const [pickup, setPickup] = useState('');
+  const [dropoff, setDropoff] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'cash'>('mpesa');
+  const { toast } = useToast();
+
+  const handleBookRide = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast({
+      title: 'Ride Requested! 🛺',
+      description: `Looking for a TukTuk from ${pickup} to ${dropoff}`,
+    });
+    setPickup('');
+    setDropoff('');
+  };
+
+  const statusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-primary/10 text-primary border-primary/20';
+      case 'pending': return 'bg-secondary/10 text-secondary-foreground border-secondary/20';
+      case 'in_progress': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'cancelled': return 'bg-destructive/10 text-destructive border-destructive/20';
+      default: return '';
+    }
+  };
+
+  return (
+    <DashboardLayout title="Book a Ride" subtitle="Find a TukTuk near you">
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Booking card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="lg:col-span-1"
+        >
+          <Card className="shadow-lg border-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-display">
+                <Navigation className="w-5 h-5 text-primary" />
+                New Ride
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleBookRide} className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    Pickup Location
+                  </Label>
+                  <Input
+                    placeholder="e.g. Westlands, Nairobi"
+                    value={pickup}
+                    onChange={(e) => setPickup(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-secondary" />
+                    Dropoff Location
+                  </Label>
+                  <Input
+                    placeholder="e.g. CBD, Nairobi"
+                    value={dropoff}
+                    onChange={(e) => setDropoff(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Payment Method</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('mpesa')}
+                      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all text-sm ${
+                        paymentMethod === 'mpesa' ? 'border-primary bg-primary/5' : 'border-border'
+                      }`}
+                    >
+                      <CreditCard className="w-4 h-4 text-primary" />
+                      M-Pesa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod('cash')}
+                      className={`flex items-center gap-2 p-3 rounded-lg border-2 transition-all text-sm ${
+                        paymentMethod === 'cash' ? 'border-primary bg-primary/5' : 'border-border'
+                      }`}
+                    >
+                      <Banknote className="w-4 h-4 text-primary" />
+                      Cash
+                    </button>
+                  </div>
+                </div>
+
+                <Button type="submit" variant="hero" className="w-full h-12">
+                  Request TukTuk 🛺
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Recent rides */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="lg:col-span-2"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 font-display">
+                <Clock className="w-5 h-5 text-muted-foreground" />
+                Recent Rides
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {mockOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="flex items-start justify-between p-4 rounded-xl border bg-card hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className={statusColor(order.status)}>
+                          {order.status.replace('_', ' ')}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-primary" />
+                          <span>{order.pickup}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-secondary" />
+                          <span>{order.dropoff}</span>
+                        </div>
+                      </div>
+                      {order.driverName && (
+                        <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                          <Star className="w-3 h-3 text-secondary" />
+                          <span>Driver: {order.driverName}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="font-display font-bold text-lg">KES {order.fare}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{order.paymentMethod === 'mpesa' ? 'M-Pesa' : 'Cash'}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default ClientDashboard;
