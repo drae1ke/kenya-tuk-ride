@@ -9,19 +9,27 @@ import { mockOrders, mockDrivers } from '@/lib/mock-data';
 import { useAuth } from '@/lib/auth-context';
 import {
   MapPin, Navigation, DollarSign, TrendingUp, FileText,
-  CheckCircle, XCircle, Clock, AlertCircle, Car
+  CheckCircle, XCircle, Clock, AlertCircle, Car, Map
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import TukTukMap from '@/components/map/TukTukMap';
 
 const DriverDashboard = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isOnline, setIsOnline] = useState(true);
 
-  // Use first mock driver as fallback
   const driverData = mockDrivers[0];
   const pendingOrders = mockOrders.filter(o => o.status === 'pending');
   const myOrders = mockOrders.filter(o => o.driverId === driverData.id);
+
+  // Map order markers for pending orders (simulated coordinates)
+  const orderMapMarkers = pendingOrders.map((order, i) => ({
+    id: order.id,
+    pickup: { lat: -1.270 - i * 0.008, lng: 36.810 + i * 0.005 },
+    dropoff: { lat: -1.285 - i * 0.005, lng: 36.795 + i * 0.008 },
+    label: `${order.clientName}: ${order.pickup} → ${order.dropoff}`,
+  }));
 
   const handleAcceptOrder = (orderId: string) => {
     toast({ title: 'Order Accepted! 🛺', description: 'Navigate to pickup location' });
@@ -76,6 +84,28 @@ const DriverDashboard = () => {
           </motion.div>
         ))}
       </div>
+
+      {/* Map */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 font-display">
+              <Map className="w-5 h-5 text-primary" />
+              Nearby Orders
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TukTukMap
+              className="h-[300px]"
+              showTukTuks={false}
+              orderMarkers={orderMapMarkers}
+            />
+            <p className="mt-2 text-xs text-muted-foreground">
+              🟢 Pickup locations · 🟡 Dropoff locations
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
 
       <Tabs defaultValue="orders" className="space-y-6">
         <TabsList className="grid grid-cols-3 w-full max-w-md">

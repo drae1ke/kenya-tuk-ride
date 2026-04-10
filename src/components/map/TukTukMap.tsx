@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -11,29 +10,38 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
-const tuktukIcon = new L.DivIcon({
+const tuktukIcon = L.divIcon({
   html: `<div style="font-size:28px;text-shadow:1px 1px 2px rgba(0,0,0,0.3);">🛺</div>`,
   className: 'tuktuk-marker',
   iconSize: [32, 32],
   iconAnchor: [16, 16],
 });
 
-const pickupIcon = new L.DivIcon({
+const pickupIcon = L.divIcon({
   html: `<div style="width:16px;height:16px;background:#16a34a;border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
-  className: 'pickup-marker',
+  className: '',
   iconSize: [16, 16],
   iconAnchor: [8, 8],
 });
 
-const dropoffIcon = new L.DivIcon({
+const dropoffIcon = L.divIcon({
   html: `<div style="width:16px;height:16px;background:#eab308;border:3px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,
-  className: 'dropoff-marker',
+  className: '',
   iconSize: [16, 16],
   iconAnchor: [8, 8],
 });
+
+export interface TukTukDriver {
+  id: number;
+  name: string;
+  lat: number;
+  lng: number;
+  rating: number;
+  vehicle: string;
+}
 
 // Nairobi area TukTuk locations
-const availableTukTuks = [
+export const availableTukTuks: TukTukDriver[] = [
   { id: 1, name: 'James O.', lat: -1.2721, lng: 36.8110, rating: 4.8, vehicle: 'Bajaj RE' },
   { id: 2, name: 'Mary W.', lat: -1.2890, lng: 36.7830, rating: 4.9, vehicle: 'Piaggio Ape' },
   { id: 3, name: 'Peter K.', lat: -1.2634, lng: 36.8025, rating: 4.5, vehicle: 'TVS King' },
@@ -45,71 +53,111 @@ interface TukTukMapProps {
   pickup?: { lat: number; lng: number } | null;
   dropoff?: { lat: number; lng: number } | null;
   className?: string;
-  onTukTukSelect?: (tuktuk: typeof availableTukTuks[0]) => void;
+  showTukTuks?: boolean;
+  showRoute?: boolean;
+  orderMarkers?: Array<{ id: string; pickup: { lat: number; lng: number }; dropoff: { lat: number; lng: number }; label: string }>;
+  onTukTukSelect?: (tuktuk: TukTukDriver) => void;
 }
 
-const FitBounds = ({ pickup, dropoff }: { pickup?: { lat: number; lng: number } | null; dropoff?: { lat: number; lng: number } | null }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (pickup && dropoff) {
-      const bounds = L.latLngBounds([pickup, dropoff]);
-      map.fitBounds(bounds, { padding: [50, 50] });
-    } else if (pickup) {
-      map.setView([pickup.lat, pickup.lng], 15);
-    }
-  }, [pickup, dropoff, map]);
-  return null;
-};
+const TukTukMap = ({ pickup, dropoff, className = '', showTukTuks = true, showRoute = false, orderMarkers, onTukTukSelect }: TukTukMapProps) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersRef = useRef<L.LayerGroup | null>(null);
+  const routeRef = useRef<L.Polyline | null>(null);
 
-const TukTukMap = ({ pickup, dropoff, className = '', onTukTukSelect }: TukTukMapProps) => {
-  const nairobiCenter: [number, number] = [-1.2821, 36.8219];
+  // Initialize map
+  useEffect(() => {
+    if (!mapRef.current || mapInstanceRef.current) return;
+
+    const map = L.map(mapRef.current).setView([-1.2821, 36.8219], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    }).addTo(map);
+
+    mapInstanceRef.current = map;
+    markersRef.current = L.layerGroup().addTo(map);
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+      markersRef.current = null;
+    };
+  }, []);
+
+  // Update markers
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const markers = markersRef.current;
+    if (!map || !markers) return;
+
+    markers.clearLayers();
+
+    // TukTuk markers
+    if (showTukTuks) {
+      availableTukTuks.forEach((tuktuk) => {
+        const marker = L.marker([tuktuk.lat, tuktuk.lng], { icon: tuktukIcon })
+          .bindPopup(`<div style="font-family:sans-serif"><b>${tuktuk.name}</b><br/>${tuktuk.vehicle}<br/><span style="color:#eab308">★ ${tuktuk.rating}</span></div>`);
+        if (onTukTukSelect) {
+          marker.on('click', () => onTukTukSelect(tuktuk));
+        }
+        markers.addLayer(marker);
+      });
+    }
+
+    // Order markers (for driver dashboard)
+    if (orderMarkers) {
+      orderMarkers.forEach((order) => {
+        L.marker([order.pickup.lat, order.pickup.lng], { icon: pickupIcon })
+          .bindPopup(`📍 Pickup: ${order.label}`)
+          .addTo(markers);
+        L.marker([order.dropoff.lat, order.dropoff.lng], { icon: dropoffIcon })
+          .bindPopup(`🏁 Dropoff: ${order.label}`)
+          .addTo(markers);
+      });
+    }
+
+    // Pickup/dropoff markers
+    if (pickup) {
+      L.marker([pickup.lat, pickup.lng], { icon: pickupIcon })
+        .bindPopup('📍 Pickup Location')
+        .addTo(markers);
+    }
+    if (dropoff) {
+      L.marker([dropoff.lat, dropoff.lng], { icon: dropoffIcon })
+        .bindPopup('🏁 Dropoff Location')
+        .addTo(markers);
+    }
+
+    // Route line
+    if (routeRef.current) {
+      routeRef.current.remove();
+      routeRef.current = null;
+    }
+    if (showRoute && pickup && dropoff) {
+      // Simulate a route with intermediate points
+      const midLat = (pickup.lat + dropoff.lat) / 2 + (Math.random() - 0.5) * 0.01;
+      const midLng = (pickup.lng + dropoff.lng) / 2 + (Math.random() - 0.5) * 0.01;
+      routeRef.current = L.polyline(
+        [[pickup.lat, pickup.lng], [midLat, midLng], [dropoff.lat, dropoff.lng]],
+        { color: '#16a34a', weight: 4, opacity: 0.8, dashArray: '10, 10' }
+      ).addTo(map);
+    }
+
+    // Fit bounds
+    const allPoints: L.LatLngExpression[] = [];
+    if (pickup) allPoints.push([pickup.lat, pickup.lng]);
+    if (dropoff) allPoints.push([dropoff.lat, dropoff.lng]);
+    if (showTukTuks) availableTukTuks.forEach(t => allPoints.push([t.lat, t.lng]));
+    if (orderMarkers) orderMarkers.forEach(o => { allPoints.push([o.pickup.lat, o.pickup.lng]); allPoints.push([o.dropoff.lat, o.dropoff.lng]); });
+
+    if (allPoints.length > 1) {
+      map.fitBounds(L.latLngBounds(allPoints), { padding: [40, 40] });
+    }
+  }, [pickup, dropoff, showTukTuks, showRoute, orderMarkers, onTukTukSelect]);
 
   return (
     <div className={`rounded-xl overflow-hidden border-2 border-border ${className}`}>
-      <MapContainer
-        center={nairobiCenter}
-        zoom={13}
-        style={{ height: '100%', width: '100%', minHeight: '350px' }}
-        zoomControl={true}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        <FitBounds pickup={pickup} dropoff={dropoff} />
-
-        {availableTukTuks.map((tuktuk) => (
-          <Marker
-            key={tuktuk.id}
-            position={[tuktuk.lat, tuktuk.lng]}
-            icon={tuktukIcon}
-            eventHandlers={{
-              click: () => onTukTukSelect?.(tuktuk),
-            }}
-          >
-            <Popup>
-              <div className="text-sm font-sans">
-                <p className="font-bold text-base">{tuktuk.name}</p>
-                <p className="text-gray-600">{tuktuk.vehicle}</p>
-                <p className="text-yellow-600 font-semibold">★ {tuktuk.rating}</p>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-
-        {pickup && (
-          <Marker position={[pickup.lat, pickup.lng]} icon={pickupIcon}>
-            <Popup>📍 Pickup Location</Popup>
-          </Marker>
-        )}
-
-        {dropoff && (
-          <Marker position={[dropoff.lat, dropoff.lng]} icon={dropoffIcon}>
-            <Popup>🏁 Dropoff Location</Popup>
-          </Marker>
-        )}
-      </MapContainer>
+      <div ref={mapRef} style={{ height: '100%', width: '100%', minHeight: '350px' }} />
     </div>
   );
 };

@@ -15,7 +15,12 @@ const ClientDashboard = () => {
   const [pickup, setPickup] = useState('');
   const [dropoff, setDropoff] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'cash'>('mpesa');
+  const [isTracking, setIsTracking] = useState(false);
   const { toast } = useToast();
+
+  // Simulated pickup/dropoff coordinates for tracking
+  const trackingPickup = { lat: -1.2721, lng: 36.8110 };
+  const trackingDropoff = { lat: -1.2890, lng: 36.7950 };
 
   const handleBookRide = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +28,7 @@ const ClientDashboard = () => {
       title: 'Ride Requested! 🛺',
       description: `Looking for a TukTuk from ${pickup} to ${dropoff}`,
     });
+    setIsTracking(true);
     setPickup('');
     setDropoff('');
   };
@@ -43,14 +49,25 @@ const ClientDashboard = () => {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 font-display">
-              <Map className="w-5 h-5 text-primary" />
-              Available TukTuks Near You
+            <CardTitle className="flex items-center justify-between font-display">
+              <span className="flex items-center gap-2">
+                <Map className="w-5 h-5 text-primary" />
+                {isTracking ? 'Live Ride Tracking' : 'Available TukTuks Near You'}
+              </span>
+              {isTracking && (
+                <Button variant="outline" size="sm" onClick={() => setIsTracking(false)}>
+                  End Tracking
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <TukTukMap
               className="h-[350px]"
+              showTukTuks={!isTracking}
+              showRoute={isTracking}
+              pickup={isTracking ? trackingPickup : null}
+              dropoff={isTracking ? trackingDropoff : null}
               onTukTukSelect={(tuktuk) =>
                 toast({
                   title: `🛺 ${tuktuk.name}`,
@@ -58,6 +75,12 @@ const ClientDashboard = () => {
                 })
               }
             />
+            {isTracking && (
+              <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span>Your TukTuk is on the way — estimated arrival in 5 min</span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
