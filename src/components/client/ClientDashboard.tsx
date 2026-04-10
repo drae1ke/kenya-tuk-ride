@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { mockOrders } from '@/lib/mock-data';
-import { MapPin, Navigation, CreditCard, Banknote, Clock, Star } from 'lucide-react';
+import { MapPin, Navigation, CreditCard, Banknote, Clock, Star, Map } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import TukTukMap from '@/components/map/TukTukMap';
 
 const ClientDashboard = () => {
   const [pickup, setPickup] = useState('');
@@ -38,6 +39,29 @@ const ClientDashboard = () => {
 
   return (
     <DashboardLayout title="Book a Ride" subtitle="Find a TukTuk near you">
+      {/* Map View */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 font-display">
+              <Map className="w-5 h-5 text-primary" />
+              Available TukTuks Near You
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TukTukMap
+              className="h-[350px]"
+              onTukTukSelect={(tuktuk) =>
+                toast({
+                  title: `🛺 ${tuktuk.name}`,
+                  description: `${tuktuk.vehicle} — ★ ${tuktuk.rating}`,
+                })
+              }
+            />
+          </CardContent>
+        </Card>
+      </motion.div>
+
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Booking card */}
         <motion.div
