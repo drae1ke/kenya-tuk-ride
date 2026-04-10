@@ -19,7 +19,7 @@ const Signup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -30,9 +30,16 @@ const Signup = () => {
       return;
     }
 
-    if (signup(name, email, phone, password, role)) {
+    const success = await signup(name, email, phone, password, role);
+    if (success) {
       toast({ title: 'Account created!', description: 'Welcome to TukTukGo' });
       navigate('/dashboard');
+    } else {
+      toast({
+        title: 'Signup failed',
+        description: 'Please verify your details and try again.',
+        variant: 'destructive',
+      });
     }
   };
 

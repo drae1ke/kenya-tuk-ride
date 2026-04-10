@@ -11,15 +11,18 @@ import { useToast } from '@/hooks/use-toast';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'client' | 'driver'>('client');
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (login(email, password)) {
+    const success = await login(email, password, role);
+    if (success) {
       toast({ title: 'Welcome back!', description: 'Login successful' });
       navigate('/dashboard');
+    } else {
+      toast({ title: 'Login failed', description: 'Please check your credentials', variant: 'destructive' });
     }
   };
 
@@ -87,6 +90,22 @@ const Login = () => {
           <p className="text-muted-foreground mb-8">Sign in to your account to continue</p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setRole('client')}
+                className={`rounded-lg border px-3 py-2 text-sm ${role === 'client' ? 'border-primary bg-primary/5 text-primary' : 'border-border'}`}
+              >
+                Rider
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('driver')}
+                className={`rounded-lg border px-3 py-2 text-sm ${role === 'driver' ? 'border-primary bg-primary/5 text-primary' : 'border-border'}`}
+              >
+                Driver
+              </button>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -125,11 +144,10 @@ const Login = () => {
           </p>
 
           <div className="mt-8 p-4 rounded-lg bg-muted/50 border">
-            <p className="text-xs font-semibold text-muted-foreground mb-2">Demo Accounts:</p>
+            <p className="text-xs font-semibold text-muted-foreground mb-2">Suggested format:</p>
             <div className="space-y-1 text-xs text-muted-foreground">
-              <p><span className="font-medium">Client:</span> sydney@example.com</p>
-              <p><span className="font-medium">Driver:</span> james@tuktuk.co.ke</p>
-              <p><span className="font-medium">Admin:</span> admin@tuktuk.co.ke</p>
+              <p><span className="font-medium">Phone:</span> 07XXXXXXXX or +2547XXXXXXXX</p>
+              <p><span className="font-medium">Role:</span> select Rider or Driver above</p>
             </div>
           </div>
         </motion.div>

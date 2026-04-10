@@ -5,7 +5,9 @@ import DriverDashboard from '@/components/driver/DriverDashboard';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 
 const Dashboard = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) return null;
 
   if (!isAuthenticated || !user) return <Navigate to="/login" />;
 
