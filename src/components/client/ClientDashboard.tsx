@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { mockOrders } from '@/lib/mock-data';
-import { MapPin, Navigation, CreditCard, Banknote, Clock, Star, Map } from 'lucide-react';
+import { MapPin, Navigation, CreditCard, Banknote, Clock, Star, Map, LocateFixed, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import TukTukMap from '@/components/map/TukTukMap';
 
@@ -16,7 +16,38 @@ const ClientDashboard = () => {
   const [dropoff, setDropoff] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'cash'>('mpesa');
   const [isTracking, setIsTracking] = useState(false);
+  const [gettingLocation, setGettingLocation] = useState(false);
   const { toast } = useToast();
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: 'Error', description: 'Geolocation is not supported by your browser', variant: 'destructive' });
+      return;
+    }
+    setGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        // Reverse geocode using Nominatim (free, no API key)
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`)
+          .then(res => res.json())
+          .then(data => {
+            const address = data.display_name?.split(',').slice(0, 3).join(',') || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+            setPickup(address);
+            toast({ title: '📍 Location found', description: address });
+          })
+          .catch(() => {
+            setPickup(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          })
+          .finally(() => setGettingLocation(false));
+      },
+      (error) => {
+        setGettingLocation(false);
+        toast({ title: 'Location access denied', description: 'Please enter your pickup location manually', variant: 'destructive' });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   // Simulated pickup/dropoff coordinates for tracking
   const trackingPickup = { lat: -1.2721, lng: 36.8110 };
@@ -106,12 +137,30 @@ const ClientDashboard = () => {
                     <div className="w-2 h-2 rounded-full bg-primary" />
                     Pickup Location
                   </Label>
-                  <Input
-                    placeholder="e.g. Westlands, Nairobi"
-                    value={pickup}
-                    onChange={(e) => setPickup(e.target.value)}
-                    required
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="e.g. Westlands, Nairobi"
+                      value={pickup}
+                      onChange={(e) => setPickup(e.target.value)}
+                      required
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={handleUseMyLocation}
+                      disabled={gettingLocation}
+                      title="Use my current location"
+                      className="shrink-0"
+                    >
+                      {gettingLocation ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <LocateFixed className="w-4 h-4 text-primary" />
+                      )}
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
