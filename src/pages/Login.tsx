@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
-import { Zap, Leaf } from 'lucide-react';
+import { Truck, Leaf } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
@@ -50,11 +50,11 @@ const Login = () => {
         >
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center">
-              <Zap className="w-8 h-8 text-secondary-foreground" />
+              <Truck className="w-8 h-8 text-secondary-foreground" />
             </div>
           </div>
           <h1 className="text-5xl font-display font-bold text-primary-foreground mb-4">
-            TukTuk<span className="text-secondary">Go</span>
+            Took<span className="text-secondary">Ride</span>
           </h1>
           <p className="text-primary-foreground/80 text-lg max-w-md">
             Kenya's first green energy TukTuk ride-hailing platform. Affordable, eco-friendly rides at your fingertips.
@@ -76,10 +76,10 @@ const Login = () => {
         >
           <div className="lg:hidden flex items-center gap-2 mb-8">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Zap className="w-5 h-5 text-primary-foreground" />
+              <Truck className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-2xl font-display font-bold">
-              TukTuk<span className="text-secondary">Go</span>
+              Took<span className="text-secondary">Ride</span>
             </span>
           </div>
 

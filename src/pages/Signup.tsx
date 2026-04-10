@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
-import { Zap, User, Car } from 'lucide-react';
+import { Truck, User, Car } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Signup = () => {
@@ -13,6 +13,7 @@ const Signup = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<'client' | 'driver'>('client');
   const { signup } = useAuth();
   const navigate = useNavigate();
@@ -20,6 +21,15 @@ const Signup = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      toast({
+        title: 'Passwords do not match',
+        description: 'Please make sure both password fields are identical.',
+      });
+      return;
+    }
+
     if (signup(name, email, phone, password, role)) {
       toast({ title: 'Account created!', description: 'Welcome to TukTukGo' });
       navigate('/dashboard');
@@ -36,11 +46,11 @@ const Signup = () => {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center">
-              <Zap className="w-6 h-6 text-primary-foreground" />
+              <Truck className="w-6 h-6 text-primary-foreground" />
             </div>
           </div>
           <h1 className="text-3xl font-display font-bold">
-            Join TukTuk<span className="text-secondary">Go</span>
+            Join Took<span className="text-secondary">Ride</span>
           </h1>
           <p className="text-muted-foreground mt-2">Create your account</p>
         </div>
@@ -96,6 +106,18 @@ const Signup = () => {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="h-12" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="h-12"
+              />
             </div>
             <Button type="submit" variant="hero" className="w-full h-12 text-base">
               Create Account

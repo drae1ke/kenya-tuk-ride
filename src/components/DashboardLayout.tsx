@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Zap, LogOut, User } from 'lucide-react';
+import { Truck, LogOut, User } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -28,10 +28,10 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
         <div className="container flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center">
-              <Zap className="w-5 h-5 text-primary-foreground" />
+              <Truck className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-display font-bold">
-              TukTuk<span className="text-secondary">Go</span>
+              Took<span className="text-secondary">Ride</span>
             </span>
             <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
               {roleBadge}
