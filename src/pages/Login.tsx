@@ -5,52 +5,42 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
-import { Truck, Leaf } from 'lucide-react';
+import { Truck, Leaf, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'client' | 'driver'>('client');
-  const { login } = useAuth();
+  const [error, setError] = useState('');
+  const { login, isSubmitting } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await login(email, password, role);
+    setError('');
+    const { success, error: err } = await login(email, password);
     if (success) {
-      toast({ title: 'Welcome back!', description: 'Login successful' });
+      toast({ title: 'Welcome back!' });
       navigate('/dashboard');
     } else {
-      toast({ title: 'Login failed', description: 'Please check your credentials', variant: 'destructive' });
+      setError(err || 'Login failed. Please check your credentials.');
     }
   };
 
   return (
     <div className="min-h-screen flex">
-      {/* Left panel - branding */}
       <div className="hidden lg:flex lg:w-1/2 gradient-hero items-center justify-center p-12 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
               className="absolute rounded-full border border-primary-foreground/20"
-              style={{
-                width: `${200 + i * 120}px`,
-                height: `${200 + i * 120}px`,
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-              }}
+              style={{ width: `${200 + i * 120}px`, height: `${200 + i * 120}px`, top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
             />
           ))}
         </div>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="relative z-10 text-center"
-        >
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="relative z-10 text-center">
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="w-16 h-16 rounded-2xl bg-secondary flex items-center justify-center">
               <Truck className="w-8 h-8 text-secondary-foreground" />
@@ -60,7 +50,7 @@ const Login = () => {
             Took<span className="text-secondary">Ride</span>
           </h1>
           <p className="text-primary-foreground/80 text-lg max-w-md">
-            Kenya's first green energy TukTuk ride-hailing platform. Affordable, eco-friendly rides at your fingertips.
+            Kenya&apos;s first green energy TukTuk ride-hailing platform. Affordable, eco-friendly rides at your fingertips.
           </p>
           <div className="flex items-center justify-center gap-2 mt-8 text-primary-foreground/60">
             <Leaf className="w-4 h-4" />
@@ -69,86 +59,80 @@ const Login = () => {
         </motion.div>
       </div>
 
-      {/* Right panel - login form */}
       <div className="flex-1 flex items-center justify-center p-8">
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="w-full max-w-md"
-        >
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-2 mb-8">
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
               <Truck className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-display font-bold">
-              Took<span className="text-secondary">Ride</span>
-            </span>
+            <span className="text-2xl font-display font-bold">Took<span className="text-secondary">Ride</span></span>
           </div>
 
           <h2 className="text-3xl font-display font-bold mb-2">Welcome back</h2>
-          <p className="text-muted-foreground mb-8">Sign in to your account to continue</p>
+          <p className="text-muted-foreground mb-8">Use one login for client, driver, or admin access.</p>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm mb-5"
+            >
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <span>{error}</span>
+            </motion.div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setRole('client')}
-                className={`rounded-lg border px-3 py-2 text-sm ${role === 'client' ? 'border-primary bg-primary/5 text-primary' : 'border-border'}`}
-              >
-                Rider
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('driver')}
-                className={`rounded-lg border px-3 py-2 text-sm ${role === 'driver' ? 'border-primary bg-primary/5 text-primary' : 'border-border'}`}
-              >
-                Driver
-              </button>
-            </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="sydney@example.com"
+                placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setError(''); }}
                 required
                 className="h-12"
+                disabled={isSubmitting}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setError(''); }}
                 required
                 className="h-12"
+                disabled={isSubmitting}
               />
             </div>
 
-            <Button type="submit" variant="hero" className="w-full h-12 text-base">
-              Sign In
+            <Button type="submit" variant="hero" className="w-full h-12 text-base gap-2" disabled={isSubmitting}>
+              {isSubmitting ? <><Loader2 className="w-4 h-4 animate-spin" />Signing in...</> : 'Sign In'}
             </Button>
           </form>
 
+          <div className="mt-5 p-4 rounded-lg bg-primary/5 border border-primary/15">
+            <p className="text-sm font-semibold text-foreground flex items-center gap-2 mb-1">
+              <ShieldCheck className="w-4 h-4 text-primary" />
+              One login for all roles
+            </p>
+            <p className="text-sm text-muted-foreground">Clients, drivers, and admins all authenticate from this same screen.</p>
+          </div>
+
           <p className="text-center mt-6 text-muted-foreground">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-primary font-semibold hover:underline">
-              Sign up
-            </Link>
+            Don&apos;t have an account?{' '}
+            <Link to="/signup" className="text-primary font-semibold hover:underline">Sign up</Link>
           </p>
 
           <div className="mt-8 p-4 rounded-lg bg-muted/50 border">
-            <p className="text-xs font-semibold text-muted-foreground mb-2">Suggested format:</p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p><span className="font-medium">Phone:</span> 07XXXXXXXX or +2547XXXXXXXX</p>
-              <p><span className="font-medium">Role:</span> select Rider or Driver above</p>
-            </div>
+            <p className="text-xs font-semibold text-muted-foreground mb-2">Phone format:</p>
+            <p className="text-xs text-muted-foreground">07XXXXXXXX or +2547XXXXXXXX</p>
+            <p className="text-xs text-muted-foreground mt-2">Admin accounts are provisioned internally and cannot be created through signup.</p>
           </div>
         </motion.div>
       </div>

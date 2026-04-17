@@ -75,6 +75,10 @@ export function emitCompleteRide(rideId: string) {
   socket?.emit('ride:complete', { rideId });
 }
 
+export function emitRideMessage(rideId: string, text: string) {
+  socket?.emit('ride:message', { rideId, text });
+}
+
 // ─── EVENT TYPES ─────────────────────────────────────────────────────────────
 
 export interface RideRequestedEvent {
@@ -114,3 +118,24 @@ export interface LocationUpdateEvent {
   location: { latitude: number; longitude: number };
   remainingDistance: number;
 }
+
+export interface DriverLocationUpdateEvent {
+  driverId: string;
+  location: {
+    latitude: number;
+    longitude: number;
+    heading?: number;
+    speed?: number;
+  };
+}
+
+export interface RideMessageEvent {
+  rideId: string;
+  message: {
+    senderType: 'user' | 'driver' | 'admin';
+    senderId: string;
+    text: string;
+    createdAt: string;
+  };
+}
+

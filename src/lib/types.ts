@@ -9,6 +9,12 @@ export interface User {
   avatar?: string;
   suspended?: boolean;
   createdAt: string;
+  profilePhoto?: string;
+  emergencyContact?: {
+    name?: string;
+    phone?: string;
+    relationship?: string;
+  };
 }
 
 export interface Driver extends User {
@@ -49,8 +55,21 @@ export interface RideOrder {
 
 export interface PricingConfig {
   baseFare: number;
+  bookingFee?: number;
   perKm: number;
   perMinute: number;
   minimumFare: number;
   surgePricing: number;
+  cancellationFee?: number;
+  nightSurcharge?: number;
+  cbdSurcharge?: number;
+  trafficMultiplier?: number;
+  demandMultiplier?: number;
+}
+
+export interface RideMessage {
+  senderType: 'user' | 'driver' | 'admin';
+  senderId: string;
+  text: string;
+  createdAt: string;
 }

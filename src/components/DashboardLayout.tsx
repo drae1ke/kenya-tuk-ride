@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { useAuth } from '@/lib/auth-context';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Truck, LogOut, User } from 'lucide-react';
+import { Truck, LogOut, User, Monitor, ShieldCheck } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -11,7 +11,7 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) => {
-  const { user, logout } = useAuth();
+  const { user, logout, sessions } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -38,11 +38,21 @@ const DashboardLayout = ({ children, title, subtitle }: DashboardLayoutProps) =>
             </span>
           </div>
           <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 px-3 py-1.5 rounded-full border">
+              <Monitor className="w-3.5 h-3.5" />
+              <span>{sessions.length || 1} active session{(sessions.length || 1) > 1 ? 's' : ''}</span>
+            </div>
             <div className="hidden sm:flex items-center gap-2 text-sm">
               <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                 <User className="w-4 h-4 text-muted-foreground" />
               </div>
-              <span className="font-medium">{user?.name}</span>
+              <div>
+                <span className="font-medium block leading-none">{user?.name}</span>
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-1">
+                  <ShieldCheck className="w-3 h-3" />
+                  {user?.phone}
+                </span>
+              </div>
             </div>
             <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
               <LogOut className="w-4 h-4" />
